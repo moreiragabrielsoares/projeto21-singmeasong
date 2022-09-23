@@ -78,15 +78,50 @@ describe("POST /recommendations/:id/upvote", () => {
 });
 
 describe("POST /recommendations/:id/downvote", () => {
-  it.todo(
-    "given a valid id it should return 200 and the score should be decremented by 1"
-  );
+  it("given a valid id it should return 200 and the score should be decremented by 1", async () => {
+    const insertedNewRecommendation = await insertNewRecommendation();
+    const { id, score } = insertedNewRecommendation;
 
-  it.todo("given an invalid id it should return 404");
+    const result = await supertest(app).post(`/recommendations/${id}/downvote`);
 
-  it.todo(
-    "given a recommendation id that its score reaches a value less than -5 it should return 200 and the recommendation should be deleted"
-  );
+    const { score: updatedScore } = await prisma.recommendation.findUnique({
+      where: { id },
+    });
+
+    expect(result.status).toEqual(200);
+    expect(updatedScore).toBe(score - 1);
+  });
+
+  it("given an invalid id it should return 404", async () => {
+    const invalidId = -1;
+
+    const result = await supertest(app).post(
+      `/recommendations/${invalidId}/downvote`
+    );
+
+    expect(result.status).toEqual(404);
+  });
+
+  it("given a recommendation id that its score reaches a value less than -5 it should return 200 and the recommendation should be deleted", async () => {
+    const insertedNewRecommendation = await insertNewRecommendation();
+    const { id } = insertedNewRecommendation;
+
+    await prisma.recommendation.update({
+      where: { id },
+      data: {
+        score: -5,
+      },
+    });
+
+    const result = await supertest(app).post(`/recommendations/${id}/downvote`);
+
+    const deletedRecommendation = await prisma.recommendation.findUnique({
+      where: { id },
+    });
+
+    expect(result.status).toEqual(200);
+    expect(deletedRecommendation).toBeNull();
+  });
 });
 
 afterAll(async () => {
