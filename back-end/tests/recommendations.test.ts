@@ -124,6 +124,66 @@ describe("POST /recommendations/:id/downvote", () => {
   });
 });
 
+describe("GET /recommendations", () => {
+  it("it should return an array", async () => {
+    const result = await supertest(app).get("/recommendations");
+
+    expect(result.body).toBeInstanceOf(Array);
+  });
+});
+
+describe("GET /recommendations/:id", () => {
+  it("given a valid id it should return an object", async () => {
+    const insertedNewRecommendation = await insertNewRecommendation();
+    const { id } = insertedNewRecommendation;
+    const result = await supertest(app).get(`/recommendations/${id}`);
+
+    expect(result.body).toBeInstanceOf(Object);
+  });
+
+  it("given an invalid id it should return 404", async () => {
+    const invalidId = -1;
+    const result = await supertest(app).get(`/recommendations/${invalidId}`);
+
+    expect(result.status).toEqual(404);
+  });
+});
+
+describe("GET /recommendations/random", () => {
+  it("it should return an object if there is any recommendation", async () => {
+    await insertNewRecommendation();
+    
+    const result = await supertest(app).get("/recommendations/random");
+
+    expect(result.body).toBeInstanceOf(Object);
+  });
+
+  it("it should return 404 if there is not any recommendation", async () => {
+    const result = await supertest(app).get("/recommendations/random");
+
+    expect(result.status).toEqual(404);
+  });
+});
+
+describe("GET /recommendations/top/:amount", () => {
+  it("given a valid amount it should return an array", async () => {
+    const amount = Math.floor(Math.random() * 100);
+    
+    const result = await supertest(app).get(`/recommendations/top/${amount}`);
+
+    expect(result.body).toBeInstanceOf(Array);
+  });
+
+  it("given an invalid amount it should return 500", async () => {
+    const invalidAmount = "NaN";
+    
+    const result = await supertest(app).get(`/recommendations/top/${invalidAmount}`);
+
+    expect(result.status).toEqual(500);
+  });
+
+});
+
 afterAll(async () => {
   await prisma.$disconnect();
 });
