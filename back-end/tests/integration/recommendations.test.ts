@@ -1,10 +1,10 @@
 import supertest from "supertest";
-import app from "../src/app";
-import { prisma } from "../src/database";
+import app from "../../src/app";
+import { prisma } from "../../src/database";
 import {
   createNewRecommendation,
   insertNewRecommendation,
-} from "../tests/factories/recommendationFactory";
+} from "../factories/recommendationFactory";
 
 beforeEach(async () => {
   await prisma.$executeRaw`TRUNCATE TABLE recommendations RESTART IDENTITY;`;
@@ -152,7 +152,7 @@ describe("GET /recommendations/:id", () => {
 describe("GET /recommendations/random", () => {
   it("it should return an object if there is any recommendation", async () => {
     await insertNewRecommendation();
-    
+
     const result = await supertest(app).get("/recommendations/random");
 
     expect(result.body).toBeInstanceOf(Object);
@@ -168,7 +168,7 @@ describe("GET /recommendations/random", () => {
 describe("GET /recommendations/top/:amount", () => {
   it("given a valid amount it should return an array", async () => {
     const amount = Math.floor(Math.random() * 100);
-    
+
     const result = await supertest(app).get(`/recommendations/top/${amount}`);
 
     expect(result.body).toBeInstanceOf(Array);
@@ -176,12 +176,13 @@ describe("GET /recommendations/top/:amount", () => {
 
   it("given an invalid amount it should return 500", async () => {
     const invalidAmount = "NaN";
-    
-    const result = await supertest(app).get(`/recommendations/top/${invalidAmount}`);
+
+    const result = await supertest(app).get(
+      `/recommendations/top/${invalidAmount}`
+    );
 
     expect(result.status).toEqual(500);
   });
-
 });
 
 afterAll(async () => {
