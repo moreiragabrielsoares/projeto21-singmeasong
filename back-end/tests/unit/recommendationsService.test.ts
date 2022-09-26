@@ -199,3 +199,113 @@ describe("getTop", () => {
     expect(result).toEqual([]);
   });
 });
+
+describe("getRandom", () => {
+  it("it should return a random recommendation", async () => {
+    const recommendations = [
+      {
+        id: 1,
+        name: "name",
+        youtubeLink: "https://www.youtube.com/watch?v=chwyjJbcs1Y8",
+        score: 0,
+      },
+    ];
+
+    jest
+      .spyOn(recommendationService, "getByScore")
+      .mockImplementationOnce((): any => {
+        return recommendations;
+      });
+
+    jest.spyOn(recommendationService, "getScoreFilter");
+
+    const result = await recommendationService.getRandom();
+
+    expect(recommendationService.getByScore).toBeCalled();
+    expect(recommendationService.getScoreFilter).toBeCalled();
+    expect(result).toEqual(recommendations[0]);
+  });
+
+  it("it should return notFoundError", async () => {
+    const recommendations = [];
+
+    jest
+      .spyOn(recommendationService, "getByScore")
+      .mockImplementationOnce((): any => {
+        return recommendations;
+      });
+
+    jest.spyOn(recommendationService, "getScoreFilter");
+
+    const promisse = recommendationService.getRandom();
+
+    expect(promisse).rejects.toEqual({
+      message: "",
+      type: "not_found",
+    });
+
+    expect(recommendationService.getByScore).toBeCalled();
+    expect(recommendationService.getScoreFilter).toBeCalled();
+  });
+});
+
+describe("getByScore", () => {
+  it("it should return a list of recommendations with score greater then 10", async () => {
+    const recommendations = [
+      {
+        id: 1,
+        name: "name",
+        youtubeLink: "https://www.youtube.com/watch?v=chwyjJbcs1Y8",
+        score: 11,
+      },
+    ];
+
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockImplementationOnce((): any => {
+        return recommendations;
+      });
+
+    const scoreFilterOptions = ["gt", "lte"];
+    const randomIndex = Math.floor(Math.random() * scoreFilterOptions.length);
+    type options = "gt" | "lte";
+    const scoreFilter: options = scoreFilterOptions[randomIndex] as options;
+    const result = await recommendationService.getByScore(scoreFilter);
+
+    expect(recommendationRepository.findAll).toBeCalledTimes(1);
+    expect(result).toEqual(recommendations);
+  });
+
+  it("it should return a list with all recommendations", async () => {
+    const recommendations = [];
+
+    jest
+      .spyOn(recommendationRepository, "findAll")
+      .mockImplementationOnce((): any => {
+        return recommendations;
+      });
+
+    const scoreFilterOptions = ["gt", "lte"];
+    const randomIndex = Math.floor(Math.random() * scoreFilterOptions.length);
+    type options = "gt" | "lte";
+    const scoreFilter: options = scoreFilterOptions[randomIndex] as options;
+    const result = await recommendationService.getByScore(scoreFilter);
+
+    expect(recommendationRepository.findAll).toBeCalledTimes(2);
+    expect(result).toEqual(recommendations);
+  });
+});
+
+describe("getScoreFilter", () => {
+  it("it should return 'gt'", async () => {
+    const result = recommendationService.getScoreFilter(0.5);
+
+    expect(result).toEqual("gt");
+  });
+
+  it("it should return 'lte'", async () => {
+    const result = recommendationService.getScoreFilter(0.8);
+
+    expect(result).toEqual("lte");
+  });
+});
